@@ -119,8 +119,6 @@ The application will start on **http://localhost:8080**
 ### 3. Access the Application
 
 - **Web Dashboard**: http://localhost:8080
-- **Swagger API Docs**: http://localhost:8080/swagger-ui.html
-- **API Documentation**: http://localhost:8080/api-docs
 
 ## API Endpoints
 
@@ -197,21 +195,6 @@ curl -X POST http://localhost:8080/api/inventory/restock \
 - **Springdoc OpenAPI** - Swagger documentation
 - **Maven** - Build tool
 
-## Interview Talking Points 💼
-
-> "I built RUHungry initially as a console application with custom data structures like hashtables and linked lists. To demonstrate my ability to modernize legacy systems, I migrated it to Spring Boot by wrapping the core logic with REST APIs. The original hashtable and linked list implementations remained unchanged, showcasing how solid OOP design allows for easy framework integration. This gave me hands-on experience with:
-> - RESTful API design
-> - Spring Boot architecture (Controllers, Services, DTOs)
-> - Legacy system modernization
-> - Maintaining backward compatibility while adding new features"
-
-## Resume Bullet Points 📝
-
-- Migrated Java console application to **Spring Boot REST API** with minimal code changes
-- Designed RESTful endpoints following **MVC architecture** (Controllers, Services, DTOs)
-- Preserved original custom **hashtable and linked list** data structures while adding modern web layer
-- Implemented **Swagger/OpenAPI** documentation for API discoverability
-- Created responsive web dashboard for real-time restaurant operations monitoring
 
 ## Future Enhancements
 
@@ -228,5 +211,5 @@ Educational project - Original assignment from Rutgers University
 
 ## Author
 
-Migrated to Spring Boot - [Your Name]  
+Migrated to Spring Boot - Hitansh Mehta 
 Original RUHungry - Mary Buist & Kushi Sharma
