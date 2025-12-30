@@ -220,6 +220,22 @@
             padding: 15px;
             border-radius: 8px;
             border-left: 4px solid #667eea;
+            transition: all 0.3s;
+        }
+
+        .ingredient-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .ingredient-card.low-stock {
+            border-left-color: #ffc107;
+            background: #fffdf5;
+        }
+
+        .ingredient-card.out-of-stock {
+            border-left-color: #dc3545;
+            background: #fff5f5;
         }
         
         .ingredient-name {
@@ -231,6 +247,35 @@
         .stock-level {
             color: #666;
             font-size: 0.9em;
+        }
+
+        .stock-level.low {
+            color: #ffc107;
+            font-weight: 600;
+        }
+
+        .stock-level.out {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .stock-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .stock-badge.low {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .stock-badge.out {
+            background: #f8d7da;
+            color: #721c24;
         }
         
         .notification {
@@ -428,6 +473,54 @@
             gap: 8px;
             flex: 1;
         }
+
+        /* Main Navigation Tabs */
+        .main-nav {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .main-nav-tab {
+            flex: 1;
+            padding: 18px 30px;
+            background: transparent;
+            border: none;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .main-nav-tab:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        .main-nav-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: white;
+        }
+
+        .main-nav-tab .icon {
+            font-size: 1.3em;
+        }
+
+        .page-section {
+            display: none;
+        }
+
+        .page-section.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -446,17 +539,33 @@
             </div>
         </div>
 
+        <!-- Main Navigation -->
+        <nav class="main-nav">
+            <button class="main-nav-tab active" onclick="switchPage('menu')">
+                <span class="icon">📖</span> Menu
+            </button>
+            <button class="main-nav-tab" onclick="switchPage('inventory')">
+                <span class="icon">📦</span> Inventory
+            </button>
+        </nav>
+
         <div class="content">
-            <div class="section">
-                <h2 class="section-title">📖 Menu</h2>
-                <div id="categoryTabs" class="category-tabs"></div>
-                <div id="menuItems" class="menu-grid"></div>
+            <!-- Menu Page -->
+            <div id="menuPage" class="page-section active">
+                <div class="section">
+                    <h2 class="section-title">📖 Menu</h2>
+                    <div id="categoryTabs" class="category-tabs"></div>
+                    <div id="menuItems" class="menu-grid"></div>
+                </div>
             </div>
 
-            <div class="section">
-                <h2 class="section-title">📦 Inventory</h2>
-                <div class="inventory-section">
-                    <div id="inventoryItems" class="inventory-grid"></div>
+            <!-- Inventory Page -->
+            <div id="inventoryPage" class="page-section">
+                <div class="section">
+                    <h2 class="section-title">📦 Inventory</h2>
+                    <div class="inventory-section">
+                        <div id="inventoryItems" class="inventory-grid"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -479,6 +588,31 @@
 
     <script>
         let currentCategory = 'all';
+        let currentPage = 'menu';
+
+        // Switch between pages
+        function switchPage(page) {
+            currentPage = page;
+            
+            // Update nav tabs
+            document.querySelectorAll('.main-nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.closest('.main-nav-tab').classList.add('active');
+            
+            // Hide all pages
+            document.querySelectorAll('.page-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show selected page
+            document.getElementById(page + 'Page').classList.add('active');
+            
+            // Load inventory data when switching to inventory page
+            if (page === 'inventory') {
+                loadInventory();
+            }
+        }
 
         // Show notification
         function showNotification(message, type = 'success') {
@@ -614,17 +748,43 @@
                 const ingredients = await response.json();
                 
                 const inventoryDiv = document.getElementById('inventoryItems');
-                inventoryDiv.innerHTML = '';
+                inventoryDiv.innerHTML = '<div style="text-align:center;color:#666;">Loading inventory...</div>';
                 
+                // Fetch all stock data
+                const stockData = [];
                 for (const ingredientName of ingredients) {
                     const stockResponse = await fetch(`/api/inventory/${ingredientName}`);
                     const stock = await stockResponse.json();
+                    stockData.push(stock);
+                }
+                
+                // Sort by stock level (greatest to least)
+                stockData.sort((a, b) => b.stockLevel - a.stockLevel);
+                
+                inventoryDiv.innerHTML = '';
+                
+                for (const stock of stockData) {
+                    // Determine stock status
+                    let cardClass = 'ingredient-card';
+                    let stockClass = 'stock-level';
+                    let badge = '';
+                    
+                    if (stock.stockLevel === 0) {
+                        cardClass += ' out-of-stock';
+                        stockClass += ' out';
+                        badge = '<div class="stock-badge out">⚠️ OUT OF STOCK</div>';
+                    } else if (stock.stockLevel < 10) {
+                        cardClass += ' low-stock';
+                        stockClass += ' low';
+                        badge = '<div class="stock-badge low">⚠️ LOW STOCK</div>';
+                    }
                     
                     inventoryDiv.innerHTML += `
-                        <div class="ingredient-card">
+                        <div class="${cardClass}">
                             <div class="ingredient-name">${stock.name}</div>
-                            <div class="stock-level">Stock: ${stock.stockLevel} units</div>
+                            <div class="${stockClass}">Stock: ${stock.stockLevel} units</div>
                             <div class="stock-level">Cost: $${stock.cost.toFixed(2)}</div>
+                            ${badge}
                         </div>
                     `;
                 }
@@ -689,7 +849,7 @@
             await loadCategories();
             await loadMenu();
             await updateProfit();
-            await loadInventory();
+            // Inventory loads on demand when user switches to that tab
         }
 
         // Load data when page loads
