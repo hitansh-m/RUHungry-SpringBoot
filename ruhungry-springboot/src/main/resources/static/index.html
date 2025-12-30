@@ -62,21 +62,115 @@
             font-weight: bold;
         }
         
-        .refresh-btn {
-            background: #667eea;
+        .restock-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 8px;
             cursor: pointer;
             font-size: 1em;
+            font-weight: 600;
             transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
-        .refresh-btn:hover {
-            background: #764ba2;
+        .restock-btn:hover {
+            background: linear-gradient(135deg, #ee5a5a 0%, #dd4949 100%);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 5px 15px rgba(238, 90, 90, 0.4);
+        }
+
+        /* Confirmation Modal Styles */
+        .confirm-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        }
+
+        .confirm-modal-overlay.active {
+            display: flex;
+        }
+
+        .confirm-modal {
+            background: white;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 90%;
+            overflow: hidden;
+            animation: modalSlideIn 0.3s ease-out;
+            text-align: center;
+        }
+
+        .confirm-modal-header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+            color: white;
+            padding: 25px 20px;
+        }
+
+        .confirm-modal-header .icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .confirm-modal-header h3 {
+            margin: 0;
+            font-size: 1.4em;
+        }
+
+        .confirm-modal-body {
+            padding: 25px;
+        }
+
+        .confirm-modal-body p {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 1.05em;
+            line-height: 1.5;
+        }
+
+        .confirm-modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .confirm-btn {
+            padding: 12px 30px;
+            border-radius: 8px;
+            border: none;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .confirm-btn.cancel {
+            background: #e9ecef;
+            color: #666;
+        }
+
+        .confirm-btn.cancel:hover {
+            background: #dee2e6;
+        }
+
+        .confirm-btn.confirm {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+            color: white;
+        }
+
+        .confirm-btn.confirm:hover {
+            background: linear-gradient(135deg, #ee5a5a 0%, #dd4949 100%);
+            transform: translateY(-2px);
         }
         
         .content {
@@ -535,7 +629,9 @@
                 <div>
                     <h2>Current Profit: $<span id="profitAmount">0.00</span></h2>
                 </div>
-                <button class="refresh-btn" onclick="updateProfit()">🔄 Refresh</button>
+                <button class="restock-btn" onclick="showRestockConfirmation()">
+                    <span>🔄</span> Reset Inventory
+                </button>
             </div>
         </div>
 
@@ -582,6 +678,23 @@
             </div>
             <div class="modal-body" id="recipeModalBody">
                 <!-- Recipe ingredients will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Restock Confirmation Modal -->
+    <div id="restockConfirmModal" class="confirm-modal-overlay" onclick="closeRestockConfirmation(event)">
+        <div class="confirm-modal" onclick="event.stopPropagation()">
+            <div class="confirm-modal-header">
+                <div class="icon">📦</div>
+                <h3>Reset Inventory</h3>
+            </div>
+            <div class="confirm-modal-body">
+                <p>Are you sure you want to reset all inventory back to the original stock levels? This will also reset your profit to $0.00.</p>
+                <div class="confirm-modal-buttons">
+                    <button class="confirm-btn cancel" onclick="closeRestockConfirmation()">Cancel</button>
+                    <button class="confirm-btn confirm" onclick="confirmResetInventory()">Yes, Reset</button>
+                </div>
             </div>
         </div>
     </div>
@@ -842,6 +955,43 @@
         function closeRecipeModal(event) {
             if (event && event.target !== event.currentTarget) return;
             document.getElementById('recipeModal').classList.remove('active');
+        }
+
+        // Show restock confirmation modal
+        function showRestockConfirmation() {
+            document.getElementById('restockConfirmModal').classList.add('active');
+        }
+
+        // Close restock confirmation modal
+        function closeRestockConfirmation(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('restockConfirmModal').classList.remove('active');
+        }
+
+        // Confirm and reset inventory
+        async function confirmResetInventory() {
+            try {
+                closeRestockConfirmation();
+                
+                const response = await fetch('/api/inventory/reset', {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    showNotification('✅ Inventory has been reset to original stock levels!', 'success');
+                    await updateProfit();
+                    
+                    // Reload inventory if on inventory page
+                    if (currentPage === 'inventory') {
+                        await loadInventory();
+                    }
+                } else {
+                    showNotification('❌ Failed to reset inventory', 'error');
+                }
+            } catch (error) {
+                console.error('Error resetting inventory:', error);
+                showNotification('❌ Error resetting inventory', 'error');
+            }
         }
 
         // Initialize dashboard

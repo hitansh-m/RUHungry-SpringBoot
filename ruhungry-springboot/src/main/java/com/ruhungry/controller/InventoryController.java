@@ -49,4 +49,14 @@ public class InventoryController {
         restaurantService.donateIngredient(request.getIngredientName(), request.getQuantity());
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/reset")
+    public ResponseEntity<Void> resetInventory() {
+        try {
+            restaurantService.resetInventory();
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

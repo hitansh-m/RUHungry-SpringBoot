@@ -165,4 +165,13 @@ public class RestaurantService {
 
         return new RecipeDTO(dishName, ingredientList);
     }
+
+    public void resetInventory() throws IOException {
+        // Reload stock from the original file
+        ClassPathResource stockResource = new ClassPathResource("data/stock.in");
+        restaurant.createStockHashTable(stockResource.getInputStream());
+        restaurant.updatePriceAndProfit();
+        // Reset transactions
+        restaurant.resetFrontNode();
+    }
 }
