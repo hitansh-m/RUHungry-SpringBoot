@@ -122,6 +122,41 @@ The application will start on **http://localhost:8080**
 - **Swagger API Docs**: http://localhost:8080/swagger-ui.html
 - **API Documentation**: http://localhost:8080/api-docs
 
+## Running with Docker 🐳
+
+No Java installation required - just Docker!
+
+### Option 1: Docker Compose (Recommended)
+
+```bash
+# Build and run
+docker-compose up --build
+
+# Run in background
+docker-compose up -d --build
+
+# Stop
+docker-compose down
+```
+
+### Option 2: Docker CLI
+
+```bash
+# Build the image
+docker build -t ruhungry-app .
+
+# Run the container
+docker run -p 8080:8080 ruhungry-app
+
+# Run in background
+docker run -d -p 8080:8080 --name ruhungry ruhungry-app
+
+# Stop and remove
+docker stop ruhungry && docker rm ruhungry
+```
+
+Access the app at **http://localhost:8080**
+
 ## API Endpoints
 
 ### Menu APIs
@@ -196,6 +231,7 @@ curl -X POST http://localhost:8080/api/inventory/restock \
 - **Spring DevTools** - Hot reload during development
 - **Springdoc OpenAPI** - Swagger documentation
 - **Maven** - Build tool
+- **Docker** - Containerization
 
 ## Interview Talking Points 💼
 
@@ -212,13 +248,14 @@ curl -X POST http://localhost:8080/api/inventory/restock \
 - Preserved original custom **hashtable and linked list** data structures while adding modern web layer
 - Implemented **Swagger/OpenAPI** documentation for API discoverability
 - Created responsive web dashboard for real-time restaurant operations monitoring
+- **Containerized application with Docker** for consistent deployment across environments
 
 ## Future Enhancements
 
 - [ ] Add database persistence (H2/PostgreSQL)
 - [ ] Implement Spring Security for authentication
 - [ ] Add unit and integration tests
-- [ ] Create Docker containerization
+- [x] Create Docker containerization 
 - [ ] Add transaction history endpoint
 - [ ] Implement WebSocket for real-time updates
 

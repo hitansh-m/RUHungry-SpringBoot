@@ -1,0 +1,31 @@
+# Git
+.git
+.gitignore
+
+# Build outputs
+target/
+!target/ruhungry-springboot-1.0.0.jar
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Documentation (not needed in container)
+*.md
+!README.md
+
+# Docker files (prevent recursive issues)
+Dockerfile
+docker-compose.yml
+.dockerignore
