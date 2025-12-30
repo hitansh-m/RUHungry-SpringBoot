@@ -264,6 +264,170 @@
         .notification.error {
             border-left: 4px solid #dc3545;
         }
+
+        /* Recipe Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow: hidden;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.4em;
+        }
+
+        .modal-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .modal-body {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .recipe-ingredient {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+            transition: background 0.2s;
+        }
+
+        .recipe-ingredient:hover {
+            background: #f8f9fa;
+        }
+
+        .recipe-ingredient:last-child {
+            border-bottom: none;
+        }
+
+        .ingredient-details {
+            flex: 1;
+        }
+
+        .ingredient-details .name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.05em;
+        }
+
+        .ingredient-details .cost {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 2px;
+        }
+
+        .stock-info {
+            text-align: right;
+        }
+
+        .stock-info .quantity {
+            background: #667eea;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .stock-info .available {
+            color: #28a745;
+            font-size: 0.85em;
+            margin-top: 4px;
+        }
+
+        .stock-info .available.low {
+            color: #dc3545;
+        }
+
+        .recipe-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+            margin-right: 8px;
+        }
+
+        .recipe-btn:hover {
+            background: #764ba2;
+            transform: scale(1.05);
+        }
+
+        .order-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+        }
     </style>
 </head>
 <body>
@@ -299,6 +463,19 @@
     </div>
 
     <div id="notification" class="notification"></div>
+
+    <!-- Recipe Modal -->
+    <div id="recipeModal" class="modal-overlay" onclick="closeRecipeModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>📋 Recipe: <span id="recipeModalTitle"></span></h3>
+                <button class="modal-close" onclick="closeRecipeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="recipeModalBody">
+                <!-- Recipe ingredients will be loaded here -->
+            </div>
+        </div>
+    </div>
 
     <script>
         let currentCategory = 'all';
@@ -361,6 +538,7 @@
                 menuDiv.innerHTML = '';
                 
                 dishes.forEach(dish => {
+                    const dishId = dish.name.replace(/\s/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
                     menuDiv.innerHTML += `
                         <div class="dish-card">
                             <div class="dish-name">${dish.name}</div>
@@ -374,8 +552,11 @@
                                 <span>$${dish.profit.toFixed(2)}</span>
                             </div>
                             <div class="order-controls">
-                                <input type="number" class="quantity-input" value="1" min="1" id="qty-${dish.name.replace(/\s/g, '-')}">
-                                <button class="order-btn" onclick="orderDish('${dish.name}')">🛒 Order</button>
+                                <input type="number" class="quantity-input" value="1" min="1" id="qty-${dishId}">
+                                <div class="button-group">
+                                    <button class="recipe-btn" onclick="showRecipe('${dish.name}')">📋 Recipe</button>
+                                    <button class="order-btn" onclick="orderDish('${dish.name}')">🛒 Order</button>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -399,7 +580,8 @@
 
         // Order a dish
         async function orderDish(dishName) {
-            const qtyInput = document.getElementById(`qty-${dishName.replace(/\s/g, '-')}`);
+            const dishId = dishName.replace(/\s/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+            const qtyInput = document.getElementById(`qty-${dishId}`);
             const quantity = parseInt(qtyInput.value) || 1;
             
             try {
@@ -449,6 +631,57 @@
             } catch (error) {
                 console.error('Error loading inventory:', error);
             }
+        }
+
+        // Show recipe modal
+        async function showRecipe(dishName) {
+            try {
+                const response = await fetch(`/api/menu/recipe/${encodeURIComponent(dishName)}`);
+                if (!response.ok) {
+                    showNotification('Recipe not found', 'error');
+                    return;
+                }
+                
+                const recipe = await response.json();
+                
+                document.getElementById('recipeModalTitle').textContent = recipe.dishName;
+                
+                const modalBody = document.getElementById('recipeModalBody');
+                modalBody.innerHTML = '';
+                
+                if (recipe.ingredients.length === 0) {
+                    modalBody.innerHTML = '<p>No ingredients found for this dish.</p>';
+                } else {
+                    recipe.ingredients.forEach(ing => {
+                        const isLowStock = ing.currentStock < 10;
+                        modalBody.innerHTML += `
+                            <div class="recipe-ingredient">
+                                <div class="ingredient-details">
+                                    <div class="name">${ing.name}</div>
+                                    <div class="cost">Cost: $${ing.cost.toFixed(2)}</div>
+                                </div>
+                                <div class="stock-info">
+                                    <div class="quantity">${ing.quantityPerDish} per dish</div>
+                                    <div class="available ${isLowStock ? 'low' : ''}">
+                                        ${ing.currentStock} in stock
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                document.getElementById('recipeModal').classList.add('active');
+            } catch (error) {
+                console.error('Error loading recipe:', error);
+                showNotification('Error loading recipe', 'error');
+            }
+        }
+
+        // Close recipe modal
+        function closeRecipeModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('recipeModal').classList.remove('active');
         }
 
         // Initialize dashboard

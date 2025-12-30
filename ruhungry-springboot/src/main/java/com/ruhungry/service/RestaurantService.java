@@ -138,4 +138,31 @@ public class RestaurantService {
         }
         return ingredients;
     }
+
+    public RecipeDTO getRecipe(String dishName) {
+        MenuNode menuNode = restaurant.findDish(dishName);
+        if (menuNode == null) {
+            return null;
+        }
+
+        Dish dish = menuNode.getDish();
+        int[] stockIds = dish.getStockID();
+        List<RecipeDTO.IngredientInfo> ingredientList = new ArrayList<>();
+
+        for (int id : stockIds) {
+            StockNode stockNode = restaurant.findStockNode(id);
+            if (stockNode != null) {
+                Ingredient ing = stockNode.getIngredient();
+                ingredientList.add(new RecipeDTO.IngredientInfo(
+                    ing.getID(),
+                    ing.getName(),
+                    1,  // Each ingredient is used 1 per dish
+                    ing.getStockLevel(),
+                    ing.getCost()
+                ));
+            }
+        }
+
+        return new RecipeDTO(dishName, ingredientList);
+    }
 }

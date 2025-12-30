@@ -1,6 +1,7 @@
 package com.ruhungry.controller;
 
 import com.ruhungry.dto.DishDTO;
+import com.ruhungry.dto.RecipeDTO;
 import com.ruhungry.service.RestaurantService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -29,5 +30,14 @@ public class MenuController {
     @GetMapping("/category/{categoryName}")
     public ResponseEntity<List<DishDTO>> getDishesByCategory(@PathVariable String categoryName) {
         return ResponseEntity.ok(restaurantService.getDishesByCategory(categoryName));
+    }
+
+    @GetMapping("/recipe/{dishName}")
+    public ResponseEntity<RecipeDTO> getRecipe(@PathVariable String dishName) {
+        RecipeDTO recipe = restaurantService.getRecipe(dishName);
+        if (recipe == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(recipe);
     }
 }
